@@ -1,0 +1,126 @@
+name: CI
+
+# 触发时机：推送到主分支、对主分支开 PR、以及手动运行
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+# 同一分支有新提交时，取消上一次还在跑的流水线，省额度
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  check:
+    name: 类型检查 + 构建
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 检查有没有把 API Key 误提交
+        working-directory: .
+        run: |
+          hits=$(git grep -nIE '(\bsk-[A-Za-z0-9][A-Za-z0-9_.-]{18,}|AI_API_KEY=[A-Za-z0-9_.-]{24,})' -- . \
+            ':!*.md' ':!*.lock' ':!package-lock.json' || true)
+          if [ -n "$hits" ]; then
+            echo "::error::疑似密钥被提交进仓库，请改为在仓库 Settings → Secrets 中配置："
+            echo "$hits"
+            exit 1
+          fi
+
+      - name: 安装 Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: TypeScript 类型检查
+        run: npx tsc --noEmit
+
+      - name: 构建生产包
+        run: npm run build
+        env:
+          # 构建期不接真实 Key，route.ts 里做了空 Key 兜底，构建不受影响
+          AI_API_KEY: ''
+
+      # 算法脚本自带断言式样例输出，跑通即等于一次冒烟测试
+      - name: 跑一遍匹配算法样例
+        working-directory: .
+        run: node design/score-model.js
+
+  deploy:
+    name: 部署到 Vercel
+    needs: check
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: 检查是否配置了 Vercel 凭据
+        id: guard
+        working-directory: .
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::notice::未配置 VERCEL_TOKEN，跳过部署。若已开启 Vercel 的 Git 集成，推送后会自动部署，无需本 job。"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 拉取代码
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: 安装 Node ${{ env.NODE_VERSION }}
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 安装依赖
+        if: steps.guard.outputs.enabled == 'true'
+        run: npm ci
+
+      - name: 拉取 Vercel 项目配置
+        if: steps.guard.outputs.enabled == 'true'
+        run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
+
+      - name: 在 Vercel 环境构建
+        if: steps.guard.outputs.enabled == 'true'
+        run: npx --yes vercel@latest build --prod --token "$VERCEL_TOKEN"
+
+      - name: 发布到生产环境
+        if: steps.guard.outputs.enabled == 'true'
+        run: |
+          url=$(npx --yes vercel@latest deploy --prebuilt --prod --token "$VERCEL_TOKEN")
+          echo "已部署：$url"
+          echo "### 部署完成 🚀\n$url" >> "$GITHUB_STEP_SUMMARY"

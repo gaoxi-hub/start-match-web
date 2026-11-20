@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>星座速配 · SIGN MATCH</title>
+<style>
+  :root{
+    --bg:#07050f;
+    --gold:#FFD36E; --pink:#FF7EB6; --violet:#A78BFA; --cyan:#7DD3FC;
+    --text:#F7F3FF; --muted:#9E95C0;
+    --panel:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{min-height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1100px 780px at 15% -8%, rgba(120,70,200,.35) 0%, transparent 55%),
+      radial-gradient(900px 700px at 95% 5%, rgba(30,80,180,.28) 0%, transparent 55%),
+      linear-gradient(165deg,#07050f 0%,#120b26 45%,#1c1038 100%);
+    background-attachment:fixed;
+    min-height:100vh;overflow-x:hidden;
+  }
+  body::before,body::after{
+    content:"";position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(50px);
+  }
+  body::before{width:620px;height:620px;left:-220px;top:-180px;
+    background:radial-gradient(circle,rgba(167,139,250,.20),transparent 68%);animation:drift1 20s ease-in-out infinite}
+  body::after{width:560px;height:560px;right:-200px;bottom:-180px;
+    background:radial-gradient(circle,rgba(255,126,182,.14),transparent 68%);animation:drift2 24s ease-in-out infinite}
+  @keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+  @keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-36px,-26px)}}
+
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .star{position:absolute;border-radius:50%;background:#fff;animation:twinkle 4s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.12;transform:scale(.7)}50%{opacity:.85;transform:scale(1.15)}}
+
+  .app{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:38px 20px 64px}
+
+  /* ---------- header ---------- */
+  .hero-head{text-align:center;margin-bottom:30px}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:3px;
+    color:var(--gold);border:1px solid rgba(255,211,110,.32);border-radius:999px;
+    padding:6px 16px;margin-bottom:16px;background:rgba(255,211,110,.06)}
+  .brand span{font-size:13px}
+  h1{font-size:clamp(27px,4.2vw,42px);font-weight:800;letter-spacing:.5px;line-height:1.25;color:#fff}
+  h1 em{font-style:normal;background:linear-gradient(95deg,var(--gold),var(--pink) 60%,var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{color:var(--muted);font-size:14px;margin-top:10px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:24px;
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 20px 55px rgba(0,0,0,.34)}
+
+  /* ---------- 双人输入 ---------- */
+  .duo{display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);
+    align-items:stretch;gap:14px;min-width:0}
+  .duo>*{min-width:0}
+  .mid-vs{align-self:center;width:40px;height:40px;border-radius:50%;
+    display:grid;place-items:center;font-size:11px;font-weight:800;letter-spacing:.5px;
+    color:var(--pink);border:1px solid rgba(255,126,182,.4);
+    background:rgba(255,126,182,.08);box-shadow:0 0 20px rgba(255,126,182,.22)}
+  .person-card{padding:20px 20px 22px;border-radius:24px;position:relative;min-width:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+    border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 20px 55px rgba(0,0,0,.32)}
+  .person-card[data-p="a"]{--accent:#FFD36E;--accent2:#FF7EB6}
+  .person-card[data-p="b"]{--accent:#FF7EB6;--accent2:#A78BFA}
+  .pc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+  .pc-id{display:flex;align-items:center;gap:9px}
+  .pc-idx{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;
+    font-size:12px;font-weight:800;color:#1a1030;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 0 16px rgba(255,211,110,.25)}
+  .pc-who{font-size:16px;font-weight:700;letter-spacing:1px}
+  .seg-gender{display:flex;gap:6px}
+  .seg-gender button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+    color:var(--muted);border-radius:10px;padding:7px 10px;font-size:12px;cursor:pointer;transition:.18s}
+  .seg-gender button.on{background:linear-gradient(135deg,rgba(167,139,250,.35),rgba(255,126,182,.28));
+    border-color:var(--violet);color:#fff}
+
+  .pc-label{display:flex;align-items:center;justify-content:space-between;
+    font-size:12px;color:var(--muted);margin-bottom:10px}
+  .pc-label .picked{font-size:12px;color:var(--accent);font-weight:600}
+
+  .zodiac-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;min-width:0}
+  .zbtn{position:relative;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+    border-radius:14px;padding:10px 2px 8px;text-align:center;cursor:pointer;min-width:0;
+    color:var(--muted);transition:.18s;font-family:inherit;overflow:hidden}
+  .zbtn .sym{display:block;font-size:21px;line-height:1;margin-bottom:5px}
+  .zbtn .nm{display:block;font-size:11px;letter-spacing:.5px}
+  .zbtn:hover{background:rgba(255,255,255,.09);transform:translateY(-2px);color:#fff}
+  .zbtn.on{color:#1a1030;border-color:transparent;
+    background:linear-gradient(140deg,var(--accent),var(--accent2));
+    box-shadow:0 8px 24px rgba(255,126,182,.3);transform:translateY(-2px)}
+  .zbtn.on .sym{filter:saturate(0) brightness(.35)}
+
+  .age-box{margin-top:18px}
+  .mode-tabs{display:flex;gap:6px;padding:4px;border-radius:12px;
+    background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.07);margin-bottom:12px}
+  .mode-tabs button{flex:1;border:none;background:transparent;color:var(--muted);
+    font-size:12px;padding:8px 0;border-radius:9px;cursor:pointer;transition:.18s;font-family:inherit}
+  .mode-tabs button.on{background:linear-gradient(135deg,rgba(255,211,110,.22),rgba(255,126,182,.2));
+    color:#fff;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+
+  /* 滚轮选择器 */
+  .picker{position:relative;height:220px;border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(0,0,0,.26),rgba(0,0,0,.14));
+    border:1px solid rgba(255,255,255,.08)}
+  .pk-list{height:100%;overflow-y:auto;scroll-snap-type:y mandatory;
+    padding:88px 0;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior:contain}
+  .pk-list::-webkit-scrollbar{display:none}
+  .pk-item{height:44px;display:flex;align-items:baseline;justify-content:center;gap:4px;
+    scroll-snap-align:center;font-size:15px;color:rgba(255,255,255,.32);
+    cursor:pointer;transition:color .18s,font-size .18s;user-select:none}
+  .pk-item span{font-size:11px;color:rgba(255,255,255,.28)}
+  .pk-item.on{color:#fff;font-weight:800;font-size:20px}
+  .pk-item.on span{color:var(--accent);font-size:12px}
+  .pk-frame{position:absolute;left:10px;right:10px;top:88px;height:44px;border-radius:12px;
+    pointer-events:none;border:1px solid rgba(255,211,110,.4);
+    background:linear-gradient(90deg,rgba(255,211,110,.10),rgba(255,126,182,.07),rgba(167,139,250,.07))}
+  .pk-fade{position:absolute;left:0;right:0;height:66px;pointer-events:none;z-index:2}
+  .pk-fade.top{top:0;background:linear-gradient(180deg,rgba(16,10,36,.96),rgba(16,10,36,0))}
+  .pk-fade.bottom{bottom:0;background:linear-gradient(0deg,rgba(16,10,36,.96),rgba(16,10,36,0))}
+
+  .cta-wrap{text-align:center;margin-top:28px}
+  .cta{border:none;cursor:pointer;font-family:inherit;font-size:17px;font-weight:800;letter-spacing:2px;
+    color:#241033;padding:16px 58px;border-radius:999px;
+    background:linear-gradient(95deg,var(--gold),var(--pink));
+    box-shadow:0 16px 40px rgba(255,126,182,.34);transition:.2s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 20px 50px rgba(255,126,182,.48)}
+  .cta:active{transform:translateY(0) scale(.99)}
+  .hint{font-size:12px;color:var(--muted);margin-top:12px;letter-spacing:.5px}
+
+  /* ---------- 结果页 ---------- */
+  #resultView{display:none}
+  #resultView > *{animation:fadeUp .62s cubic-bezier(.2,.8,.2,1) both}
+  #resultView > *:nth-child(2){animation-delay:.08s}
+  #resultView > *:nth-child(3){animation-delay:.16s}
+  #resultView > *:nth-child(4){animation-delay:.24s}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+  .result-top{padding:26px 22px 24px;text-align:center;position:relative;overflow:hidden}
+  .result-top::before{content:"";position:absolute;left:50%;top:-120px;width:520px;height:320px;
+    transform:translateX(-50%);background:radial-gradient(ellipse,rgba(255,211,110,.16),transparent 70%);pointer-events:none}
+  .rt-eyebrow{font-size:12px;letter-spacing:4px;color:var(--gold);opacity:.9;margin-bottom:10px}
+  .rt-main{display:flex;align-items:center;justify-content:center;gap:clamp(8px,3.5vw,46px);min-width:0}
+  .rt-sign{flex:1;max-width:170px;min-width:0;text-align:center}
+  .rt-sym{font-size:clamp(38px,7vw,54px);line-height:1;filter:drop-shadow(0 0 18px rgba(255,211,110,.32))}
+  .rt-name{font-size:16px;font-weight:800;margin-top:8px}
+  .rt-meta{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.5px}
+  .rt-ring{position:relative;width:clamp(124px,20vw,154px);height:clamp(124px,20vw,154px);flex:0 0 auto}
+  .rt-ring svg{width:100%;height:100%;display:block}
+  .ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:10}
+  .ring-fg{fill:none;stroke:url(#ringGrad);stroke-width:10;stroke-linecap:round;
+    transform:rotate(-90deg);transform-origin:60px 60px;
+    transition:stroke-dashoffset 1.25s cubic-bezier(.2,.8,.2,1)}
+  .rt-score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;line-height:1}
+  .rt-score #rtScore{font-size:clamp(34px,5vw,42px);font-weight:900}
+  .rt-score small{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:6px}
+  .rt-verdict{margin-top:20px;font-size:16px;font-weight:700;
+    background:linear-gradient(90deg,var(--gold),var(--pink));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .rel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+  .rel-grid>*{min-width:0}
+  .rel-card{padding:18px 18px 16px;position:relative;overflow:hidden}
+  .rel-card::after{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,211,110,.16),transparent 70%);pointer-events:none}
+  .rel-card.spouse::after{background:radial-gradient(circle,rgba(167,139,250,.2),transparent 70%)}
+  .rel-card.friend::after{background:radial-gradient(circle,rgba(125,211,252,.2),transparent 70%)}
+  .rel-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .rel-ic{font-size:17px}
+  .rel-name{font-size:13px;color:var(--muted);letter-spacing:1px;font-weight:600}
+  .rel-level{margin-left:auto;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;color:#241033;
+    background:linear-gradient(90deg,var(--gold),var(--pink))}
+  .spouse .rel-level{background:linear-gradient(90deg,var(--violet),var(--cyan))}
+  .friend .rel-level{background:linear-gradient(90deg,var(--cyan),#A7F3D0)}
+  .rel-score{display:flex;align-items:baseline;gap:3px}
+  .rel-score b{font-size:32px;font-weight:900;letter-spacing:-1px}
+  .rel-score span{font-size:11px;color:var(--muted)}
+  .rel-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:10px 0 12px}
+  .rel-bar i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--gold),var(--pink));
+    transition:width 1.15s cubic-bezier(.2,.8,.2,1)}
+  .spouse .rel-bar i{background:linear-gradient(90deg,var(--violet),var(--cyan))}
+  .friend .rel-bar i{background:linear-gradient(90deg,var(--cyan),#A7F3D0)}
+  .rel-text{font-size:12px;line-height:1.7;color:var(--muted);min-height:62px}
+
+  .traits-panel{margin-top:14px;padding:20px 20px 18px}
+  .tp-title{font-size:13px;color:var(--gold);letter-spacing:2px;margin-bottom:14px}
+  .tp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+  .tp-grid>*{min-width:0}
+  .tp-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:15px 16px}
+  .tp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .tp-head .sym{font-size:20px}
+  .tp-head b{font-size:14px}
+  .tp-head .el{margin-left:auto;font-size:10px;color:var(--cyan);border:1px solid rgba(125,211,252,.3);
+    border-radius:999px;padding:2px 8px}
+  .tp-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+  .tp-tags span{font-size:10px;color:var(--pink);border:1px solid rgba(255,126,182,.28);
+    border-radius:999px;padding:2px 8px}
+  .tp-card p{font-size:12px;color:var(--muted);line-height:1.7}
+
+  /* ---------- AI 深度解读 ---------- */
+  .ai-panel{margin-top:14px;padding:20px 20px 18px;position:relative;overflow:hidden}
+  .ai-panel::before{content:"";position:absolute;right:-70px;top:-80px;width:230px;height:230px;
+    border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.24),transparent 70%);pointer-events:none}
+  .ai-head{display:flex;align-items:center;gap:12px;position:relative}
+  .ai-spark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:16px;
+    color:#1a1030;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--gold),var(--pink));
+    box-shadow:0 0 22px rgba(255,126,182,.32)}
+  .ai-head-txt{min-width:0;flex:1}
+  .ai-title{font-size:14px;font-weight:800;letter-spacing:.5px}
+  .ai-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .ai-btn{flex:0 0 auto;border:1px solid rgba(167,139,250,.45);cursor:pointer;font-family:inherit;
+    font-size:12px;font-weight:700;color:#fff;padding:10px 18px;border-radius:999px;
+    background:linear-gradient(135deg,rgba(167,139,250,.3),rgba(255,126,182,.22));transition:.2s}
+  .ai-btn:hover:not(:disabled){transform:translateY(-1px);border-color:var(--violet)}
+  .ai-btn:disabled{opacity:.55;cursor:default}
+
+  .ai-body{display:none}
+  .ai-body.on{display:block}
+  .ai-status{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);margin-top:14px}
+  .ai-status .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex:0 0 auto;
+    box-shadow:0 0 10px var(--gold);animation:blink 1s ease-in-out infinite}
+  .ai-status.done .dot{animation:none;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  .ai-status.err .dot{animation:none;background:#FF6B6B;box-shadow:0 0 10px rgba(255,107,107,.7)}
+  .ai-status.err{color:#FFB3B3}
+  .ai-status.warn .dot{animation:none;background:var(--gold);box-shadow:0 0 10px rgba(255,214,140,.7)}
+  .ai-status.warn{color:rgba(255,214,140,.85)}
+
+  .ai-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+  .ai-cols>*{min-width:0}
+  .ai-sec{display:none;padding:14px 15px;border-radius:16px;
+    background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
+  .ai-sec.on{display:block;animation:fadeUp .42s ease both}
+  .ai-sec-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:13px}
+  .ai-sec-h b{font-weight:700}
+  .ai-sec-h .ic{font-size:15px;line-height:1}
+  .ai-sec-h .tag{font-size:10px;color:var(--violet);border:1px solid rgba(167,139,250,.3);
+    border-radius:999px;padding:1px 7px;font-weight:400}
+  .ai-sec p{font-size:12.5px;line-height:1.85;color:#D8D1EE;white-space:pre-wrap;word-break:break-word}
+  .ai-sec p.streaming::after{content:"▍";color:var(--gold);margin-left:1px;
+    animation:blink .9s steps(1) infinite}
+
+  .ai-rel{margin-top:12px;padding:15px 16px 14px}
+  .ai-score{display:flex;align-items:baseline;gap:2px;flex:0 0 auto}
+  .ai-score b{font-size:24px;font-weight:900;letter-spacing:-.5px;
+    background:linear-gradient(90deg,var(--gold),var(--pink));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .ai-rel[data-sec="SPOUSE"] .ai-score b{background:linear-gradient(90deg,var(--violet),var(--cyan));
+    -webkit-background-clip:text;background-clip:text}
+  .ai-rel[data-sec="FRIEND"] .ai-score b{background:linear-gradient(90deg,var(--cyan),#A7F3D0);
+    -webkit-background-clip:text;background-clip:text}
+  .ai-score small{font-size:10px;color:var(--muted);font-weight:400}
+  .ai-diff{font-size:10px;color:var(--muted);margin-left:auto;margin-right:10px}
+  .ai-diff.up{color:var(--gold)}
+  .ai-diff.down{color:var(--cyan)}
+
+  .ai-sum{margin-top:12px;text-align:center;padding:16px 18px;
+    background:linear-gradient(135deg,rgba(255,211,110,.1),rgba(255,126,182,.07));
+    border-color:rgba(255,211,110,.26)}
+  .ai-sum p{font-size:13.5px;font-weight:700;color:#fff;line-height:1.7}
+
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;
+    padding:13px 28px;border-radius:999px;transition:.2s}
+  .btn.primary{color:#241033;background:linear-gradient(95deg,var(--gold),var(--pink));
+    box-shadow:0 12px 30px rgba(255,126,182,.3)}
+  .btn.ghost{color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--line)}
+  .btn:hover{transform:translateY(-2px)}
+
+  .foot{text-align:center;color:rgba(255,255,255,.3);font-size:11px;margin-top:36px;letter-spacing:.5px}
+
+  .shake{animation:shake .42s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  #toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(18px);
+    background:rgba(20,12,40,.96);border:1px solid var(--line);color:#fff;
+    padding:11px 22px;border-radius:999px;font-size:13px;opacity:0;transition:.25s;
+    z-index:99;pointer-events:none;white-space:nowrap}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:760px){
+    .app{padding:26px 14px 48px}
+    .duo{grid-template-columns:minmax(0,1fr);gap:12px}
+    .mid-vs{width:auto;height:24px;border-radius:12px;padding:0 16px;justify-self:center;font-size:10px}
+    .rel-grid{grid-template-columns:1fr}
+    .tp-grid{grid-template-columns:1fr}
+    .rt-sign{max-width:none}
+    .result-top{padding:22px 14px}
+    .rel-text{min-height:0}
+    .ai-panel{padding:18px 15px 16px}
+    .ai-cols{grid-template-columns:1fr}
+    .ai-btn{padding:9px 14px;font-size:11.5px}
+    .ai-sub{font-size:10.5px}
+  }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div class="app">
+  <header class="hero-head">
+    <div class="brand"><span>✦</span> SIGN MATCH</div>
+    <h1>你们的星座，<em>配吗？</em></h1>
+    <p class="lead">选择两个人的星座与年龄 · 一秒揭晓恋人 / 夫妻 / 朋友契合度</p>
+  </header>
+
+  <!-- ============ 输入视图 ============ -->
+  <section id="inputView">
+    <div class="duo">
+      <article class="person-card" data-p="a">
+        <div class="pc-head">
+          <div class="pc-id"><span class="pc-idx">A</span><span class="pc-who">TA</span></div>
+          <div class="seg-gender" data-p="a">
+            <button data-g="male">♂ 男</button><button data-g="female">♀ 女</button>
+          </div>
+        </div>
+        <div class="pc-label"><span>选择星座</span><span class="picked" data-picked="a">待选择</span></div>
+        <div class="zodiac-grid" data-grid="a"></div>
+        <div class="age-box">
+          <div class="mode-tabs" data-tabs="a">
+            <button data-mode="age" class="on">按年龄</button>
+            <button data-mode="year">按出生年份</button>
+          </div>
+          <div class="picker" data-picker="a"></div>
+        </div>
+      </article>
+
+      <div class="mid-vs">VS</div>
+
+      <article class="person-card" data-p="b">
+        <div class="pc-head">
+          <div class="pc-id"><span class="pc-idx">B</span><span class="pc-who">我</span></div>
+          <div class="seg-gender" data-p="b">
+            <button data-g="male">♂ 男</button><button data-g="female">♀ 女</button>
+          </div>
+        </div>
+        <div class="pc-label"><span>选择星座</span><span class="picked" data-picked="b">待选择</span></div>
+        <div class="zodiac-grid" data-grid="b"></div>
+        <div class="age-box">
+          <div class="mode-tabs" data-tabs="b">
+            <button data-mode="age" class="on">按年龄</button>
+            <button data-mode="year">按出生年份</button>
+          </div>
+          <div class="picker" data-picker="b"></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="cta-wrap">
+      <button class="cta" id="matchBtn">✦ 开始速配 ✦</button>
+      <p class="hint">纯娱乐 · 无需注册 · 不留痕</p>
+    </div>
+  </section>
+
+  <!-- ============ 结果视图 ============ -->
+  <section id="resultView">
+    <div class="result-top panel">
+      <div class="rt-eyebrow">综合契合指数</div>
+      <div class="rt-main">
+        <div class="rt-sign">
+          <div class="rt-sym" id="raSym">♈</div>
+          <div class="rt-name" id="raName">白羊座</div>
+          <div class="rt-meta" id="raMeta">火象 · 26岁</div>
+        </div>
+        <div class="rt-ring">
+          <svg viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#FFD36E"/>
+                <stop offset="1" stop-color="#FF7EB6"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="60" cy="60" r="52"/>
+            <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"/>
+          </svg>
+          <div class="rt-score"><span id="rtScore">0</span><small>FIT</small></div>
+        </div>
+        <div class="rt-sign">
+          <div class="rt-sym" id="rbSym">♌</div>
+          <div class="rt-name" id="rbName">狮子座</div>
+          <div class="rt-meta" id="rbMeta">火象 · 24岁</div>
+        </div>
+      </div>
+      <div class="rt-verdict" id="rtVerdict">高度契合，越处越甜</div>
+    </div>
+
+    <div class="rel-grid">
+      <article class="rel-card panel couple">
+        <div class="rel-head"><span class="rel-ic">💞</span><span class="rel-name">恋人</span><span class="rel-level" id="lvCouple">—</span></div>
+        <div class="rel-score"><b id="scCouple">0</b><span>分</span></div>
+        <div class="rel-bar"><i id="barCouple"></i></div>
+        <p class="rel-text" id="txCouple"></p>
+      </article>
+      <article class="rel-card panel spouse">
+        <div class="rel-head"><span class="rel-ic">💍</span><span class="rel-name">夫妻</span><span class="rel-level" id="lvSpouse">—</span></div>
+        <div class="rel-score"><b id="scSpouse">0</b><span>分</span></div>
+        <div class="rel-bar"><i id="barSpouse"></i></div>
+        <p class="rel-text" id="txSpouse"></p>
+      </article>
+      <article class="rel-card panel friend">
+        <div class="rel-head"><span class="rel-ic">🤝</span><span class="rel-name">朋友</span><span class="rel-level" id="lvFriend">—</span></div>
+        <div class="rel-score"><b id="scFriend">0</b><span>分</span></div>
+        <div class="rel-bar"><i id="barFriend"></i></div>
+        <p class="rel-text" id="txFriend"></p>
+      </article>
+    </div>
+
+    <div class="traits-panel panel">
+      <div class="tp-title">性格速览</div>
+      <div class="tp-grid">
+        <div class="tp-card">
+          <div class="tp-head"><span class="sym" id="tpSymA">♈</span><b id="tpNameA">白羊座</b><span class="el" id="tpElA">火象</span></div>
+          <div class="tp-tags" id="tpTagsA"></div>
+          <p id="tpDescA"></p>
+        </div>
+        <div class="tp-card">
+          <div class="tp-head"><span class="sym" id="tpSymB">♌</span><b id="tpNameB">狮子座</b><span class="el" id="tpElB">火象</span></div>
+          <div class="tp-tags" id="tpTagsB"></div>
+          <p id="tpDescB"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-panel panel" id="aiPanel">
+      <div class="ai-head">
+        <span class="ai-spark">✦</span>
+        <div class="ai-head-txt">
+          <div class="ai-title">AI 深度解读</div>
+          <div class="ai-sub" id="aiSub">算法给出结论，AI 讲清为什么</div>
+        </div>
+        <button class="ai-btn" id="aiBtn">让 AI 分析</button>
+      </div>
+
+      <div class="ai-body" id="aiBody">
+        <div class="ai-status" id="aiStatus">
+          <span class="dot"></span><span id="aiStatusText">正在读取两个人的星座…</span>
+        </div>
+
+        <div class="ai-cols">
+          <div class="ai-sec" data-sec="A">
+            <div class="ai-sec-h">
+              <span class="ic" id="aiSymA">♈</span><b id="aiNameA">白羊座</b><span class="tag">TA</span>
+            </div>
+            <p data-text="A"></p>
+          </div>
+          <div class="ai-sec" data-sec="B">
+            <div class="ai-sec-h">
+              <span class="ic" id="aiSymB">♌</span><b id="aiNameB">狮子座</b><span class="tag">你</span>
+            </div>
+            <p data-text="B"></p>
+          </div>
+        </div>
+
+        <div class="ai-sec ai-rel" data-sec="COUPLE">
+          <div class="ai-sec-h">
+            <span class="ic">💞</span><b>恋人</b>
+            <span class="ai-diff" data-diff="COUPLE"></span>
+            <span class="ai-score"><b data-score="COUPLE">—</b><small>分</small></span>
+          </div>
+          <p data-text="COUPLE"></p>
+        </div>
+
+        <div class="ai-sec ai-rel" data-sec="SPOUSE">
+          <div class="ai-sec-h">
+            <span class="ic">💍</span><b>夫妻</b>
+            <span class="ai-diff" data-diff="SPOUSE"></span>
+            <span class="ai-score"><b data-score="SPOUSE">—</b><small>分</small></span>
+          </div>
+          <p data-text="SPOUSE"></p>
+        </div>
+
+        <div class="ai-sec ai-rel" data-sec="FRIEND">
+          <div class="ai-sec-h">
+            <span class="ic">🤝</span><b>朋友</b>
+            <span class="ai-diff" data-diff="FRIEND"></span>
+            <span class="ai-score"><b data-score="FRIEND">—</b><small>分</small></span>
+          </div>
+          <p data-text="FRIEND"></p>
+        </div>
+
+        <div class="ai-sec ai-sum" data-sec="SUMMARY">
+          <p data-text="SUMMARY"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="saveBtn">💾 保存为图片</button>
+      <button class="btn ghost" id="againBtn">↻ 重新测试</button>
+    </div>
+  </section>
+
+  <footer class="foot">本结果仅供娱乐 · 基于太阳星座的趣味规则引擎 · 非科学占星</footer>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ==================== 数据 ==================== */
+const ZODIACS = [
+  {name:'白羊座',symbol:'♈',element:'fire', traits:['热情','直率','勇敢'],desc:'行动力满格，想到就去做，爱恨都很直接。'},
+  {name:'金牛座',symbol:'♉',element:'earth',traits:['稳重','务实','享受'],desc:'踏实可靠，懂得生活，认定的事很难改变。'},
+  {name:'双子座',symbol:'♊',element:'air', traits:['机智','好奇','善聊'],desc:'脑子转得快，永远有新鲜话题，双重性格。'},
+  {name:'巨蟹座',symbol:'♋',element:'water',traits:['温柔','顾家','敏感'],desc:'细腻体贴，重感情，天生会照顾身边的人。'},
+  {name:'狮子座',symbol:'♌',element:'fire', traits:['自信','慷慨','耀眼'],desc:'自带光环，大方霸气，需要被欣赏和关注。'},
+  {name:'处女座',symbol:'♍',element:'earth',traits:['细致','理性','完美'],desc:'追求细节，逻辑清晰，默默把事情做到最好。'},
+  {name:'天秤座',symbol:'♎',element:'air', traits:['优雅','公平','社交'],desc:'审美在线，擅长协调，难得拿定主意。'},
+  {name:'天蝎座',symbol:'♏',element:'water',traits:['神秘','深刻','占有'],desc:'洞察力强，爱得深沉，感情里浓度很高。'},
+  {name:'射手座',symbol:'♐',element:'fire', traits:['自由','乐观','坦率'],desc:'热爱远方，心直口快，讨厌被束缚。'},
+  {name:'摩羯座',symbol:'♑',element:'earth',traits:['自律','目标','责任'],desc:'成熟稳重，目标感强，靠努力一步步向上。'},
+  {name:'水瓶座',symbol:'♒',element:'air', traits:['独立','创新','博爱'],desc:'特立独行，脑洞清奇，重视精神自由。'},
+  {name:'双鱼座',symbol:'♓',element:'water',traits:['浪漫','善良','多情'],desc:'共情力满分，爱幻想，心里住着一片海。'}
+];
+const EL_NAME={fire:'火象',earth:'土象',air:'风象',water:'水象'};
+const ORDER=['fire','earth','air','water'];
+const keyOf=(a,b)=>[a,b].sort((x,y)=>ORDER.indexOf(x)-ORDER.indexOf(y)).join('|');
+const COUPLE_BASE={'fire|fire':72,'earth|fire':52,'fire|air':86,'fire|water':48,'earth|earth':68,'earth|air':58,'earth|water':78,'air|air':74,'air|water':60,'water|water':80};
+const FRIEND_BASE={'fire|fire':80,'earth|fire':66,'fire|air':84,'fire|water':62,'earth|earth':76,'earth|air':68,'earth|water':84,'air|air':78,'air|water':70,'water|water':82};
+const TRINES=[['白羊座','狮子座'],['狮子座','射手座'],['白羊座','射手座'],['金牛座','处女座'],['处女座','摩羯座'],['金牛座','摩羯座'],['双子座','天秤座'],['天秤座','水瓶座'],['双子座','水瓶座'],['巨蟹座','天蝎座'],['天蝎座','双鱼座'],['巨蟹座','双鱼座']];
+const OPPOSITES=[['白羊座','天秤座'],['金牛座','天蝎座'],['双子座','射手座'],['巨蟹座','摩羯座'],['狮子座','水瓶座'],['处女座','双鱼座']];
+const SQUARES=[['白羊座','摩羯座'],['金牛座','水瓶座'],['双子座','处女座'],['巨蟹座','天秤座'],['狮子座','天蝎座'],['处女座','射手座'],['天秤座','摩羯座'],['天蝎座','水瓶座'],['射手座','双鱼座']];
+const has=(arr,a,b)=>arr.some(p=>p.includes(a)&&p.includes(b));
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const LEVELS=[[88,'天作之合'],[75,'高度契合'],[60,'相当不错'],[45,'需要磨合'],[0,'挑战不小']];
+const levelOf=s=>LEVELS.find(l=>s>=l[0])[1];
+const TEXTS={
+  couple:['你们之间的吸引力几乎写在星盘里，越靠近越上头。','节奏合拍，用心经营就是让人羡慕的一对。','有差异也有火花，多一点耐心就会很甜。','性格碰撞明显，但真诚能化解大部分难题。','挑战不小，充足的沟通是这段关系的必修课。'],
+  spouse:['生活节奏高度互补，适合一起把日子过成诗。','价值观相近，是能一起扛事、一起享受的人。','婚后需要磨合，但底座稳固，值得慢慢经营。','差异需要被看见，分工与包容是关键。','长期相处压力偏大，建议先做朋友再谈未来。'],
+  friend:['聊得来又玩得开，是能一起疯也能一起静的挚友。','兴趣相投，相处轻松，友谊的小船很稳。','总体合拍，偶尔的小摩擦无伤大雅。','需要找到共同话题，熟悉之后会越来越顺。','相处需要更多主动，惊喜往往藏在细节里。']
+};
+const textOf=(cat,s)=>TEXTS[cat][LEVELS.findIndex(l=>s>=l[0])];
+const verdictOf=s=>s>=88?'天作之合，缘分不浅':s>=75?'高度契合，越处越甜':s>=60?'挺合拍，慢慢磨合':s>=45?'有差异，也有火花':'挑战不小，且行且珍惜';
+
+/* ==================== 状态 ==================== */
+const NOW=new Date().getFullYear();
+const AGE_MIN=18,AGE_MAX=60;
+const YEAR_MIN=NOW-AGE_MAX,YEAR_MAX=NOW-AGE_MIN;
+const ITEM_H=44;
+const state={
+  a:{sign:null,gender:null,mode:'age',age:26,year:NOW-26},
+  b:{sign:null,gender:null,mode:'age',age:24,year:NOW-24},
+  result:null
+};
+const effAge=p=>p.mode==='age'?p.age:(NOW-p.year);
+
+/* ==================== 星空 ==================== */
+(function(){
+  let html='';
+  for(let i=0;i<150;i++){
+    const x=Math.random()*100,y=Math.random()*100,s=(Math.random()*2+1).toFixed(1),
+          delay=(Math.random()*4).toFixed(1),dur=(3+Math.random()*4).toFixed(1);
+    html+=`<span class="star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-delay:${delay}s;animation-duration:${dur}s"></span>`;
+  }
+  document.getElementById('stars').innerHTML=html;
+})();
+
+/* ==================== 星座 / 性别 ==================== */
+function renderZodiac(p){
+  const grid=document.querySelector(`[data-grid="${p}"]`);
+  grid.innerHTML=ZODIACS.map((z,i)=>
+    `<button class="zbtn" data-i="${i}"><span class="sym">${z.symbol}</span><span class="nm">${z.name.replace('座','')}</span></button>`
+  ).join('');
+  grid.onclick=e=>{
+    const b=e.target.closest('.zbtn');if(!b)return;
+    grid.querySelectorAll('.zbtn').forEach(n=>n.classList.remove('on'));
+    b.classList.add('on');
+    state[p].sign=+b.dataset.i;
+    document.querySelector(`[data-picked="${p}"]`).textContent=ZODIACS[state[p].sign].name;
+  };
+}
+['a','b'].forEach(renderZodiac);
+
+document.querySelectorAll('.seg-gender').forEach(seg=>{
+  seg.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const p=seg.dataset.p,was=b.classList.contains('on');
+    seg.querySelectorAll('button').forEach(n=>n.classList.remove('on'));
+    if(was){state[p].gender=null;}
+    else{b.classList.add('on');state[p].gender=b.dataset.g;}
+  };
+});
+
+/* ==================== 滚轮选择器 ==================== */
+function renderPicker(p){
+  const el=document.querySelector(`[data-picker="${p}"]`);
+  if(!el.dataset.ready){
+    el.innerHTML=`<div class="pk-fade top"></div><div class="pk-list"></div><div class="pk-fade bottom"></div><div class="pk-frame"></div>`;
+    el.dataset.ready='1';
+  }
+  clearTimeout(el._t);
+  const list=el.querySelector('.pk-list');
+  const mode=state[p].mode;
+  const vals=[];
+  if(mode==='age'){for(let a=AGE_MIN;a<=AGE_MAX;a++)vals.push(a);}
+  else{for(let y=YEAR_MIN;y<=YEAR_MAX;y++)vals.push(y);}
+  const cur=mode==='age'?state[p].age:state[p].year;
+  list.innerHTML=vals.map(v=>
+    `<div class="pk-item${v===cur?' on':''}" data-v="${v}">${v}<span>${mode==='age'?'岁':'年'}</span></div>`
+  ).join('');
+  const idx=Math.max(0,vals.indexOf(cur));
+  requestAnimationFrame(()=>{list.scrollTop=idx*ITEM_H;});
+
+  list.onscroll=()=>{
+    clearTimeout(el._t);
+    el._t=setTimeout(()=>{
+      if(!list.isConnected)return;
+      const i=Math.max(0,Math.min(vals.length-1,Math.round(list.scrollTop/ITEM_H)));
+      const v=vals[i],now=state[p].mode==='age'?state[p].age:state[p].year;
+      if(v!==now){
+        if(state[p].mode==='age')state[p].age=v;else state[p].year=v;
+        list.querySelectorAll('.pk-item').forEach(n=>n.classList.toggle('on',+n.dataset.v===v));
+      }
+    },90);
+  };
+  list.onclick=e=>{
+    const it=e.target.closest('.pk-item');if(!it)return;
+    list.scrollTo({top:vals.indexOf(+it.dataset.v)*ITEM_H,behavior:'smooth'});
+  };
+}
+['a','b'].forEach(renderPicker);
+
+document.querySelectorAll('.mode-tabs').forEach(tabs=>{
+  tabs.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.classList.contains('on'))return;
+    const p=tabs.dataset.tabs;
+    tabs.querySelectorAll('button').forEach(n=>n.classList.remove('on'));
+    b.classList.add('on');
+    const mode=b.dataset.mode;
+    if(mode==='year'){state[p].year=clamp(NOW-state[p].age,YEAR_MIN,YEAR_MAX);}
+    else{state[p].age=clamp(NOW-state[p].year,AGE_MIN,AGE_MAX);}
+    state[p].mode=mode;
+    renderPicker(p);
+  };
+});
+
+/* ==================== 匹配算法 ==================== */
+function compute(a,b){
+  const za=ZODIACS[a.sign],zb=ZODIACS[b.sign];
+  const same=za.name===zb.name;
+  let couple=COUPLE_BASE[keyOf(za.element,zb.element)];
+  let friend=FRIEND_BASE[keyOf(za.element,zb.element)];
+  if(same){couple+=3;friend+=2;}
+  if(has(TRINES,za.name,zb.name)){couple+=6;friend+=6;}
+  if(has(OPPOSITES,za.name,zb.name)){couple+=8;friend+=2;}
+  if(has(SQUARES,za.name,zb.name)){couple-=6;friend-=4;}
+  let penalty=0;
+  const ageA=effAge(a),ageB=effAge(b);
+  const gap=Math.abs(ageA-ageB);
+  penalty=gap<=3?0:gap<=6?2:gap<=10?5:8;
+  couple=clamp(couple-penalty,35,98);
+  friend=clamp(friend-Math.round(penalty*.4),45,98);
+  const stable=[za.element,zb.element].every(e=>e==='earth'||e==='water');
+  const fiery=[za.element,zb.element].every(e=>e==='fire'||e==='air');
+  const spouse=clamp(couple+(stable?4:fiery?-4:0),35,98);
+  const overall=Math.round((couple+spouse+friend)/3);
+  return {
+    a:za,b:zb,ageA,ageB,overall,
+    couple:{score:couple,level:levelOf(couple),text:textOf('couple',couple)},
+    spouse:{score:spouse,level:levelOf(spouse),text:textOf('spouse',spouse)},
+    friend:{score:friend,level:levelOf(friend),text:textOf('friend',friend)}
+  };
+}
+
+/* ==================== 视图 ==================== */
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+document.getElementById('matchBtn').onclick=()=>{
+  if(state.a.sign===null||state.b.sign===null){
+    const iv=document.getElementById('inputView');
+    iv.classList.add('shake');setTimeout(()=>iv.classList.remove('shake'),420);
+    toast('请先为双方都选择一个星座 ✦');return;
+  }
+  const r=compute(state.a,state.b);
+  state.result=r;
+  fillResult(r);
+  document.getElementById('inputView').style.display='none';
+  const rv=document.getElementById('resultView');
+  rv.style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  animateResult(r);
+};
+
+document.getElementById('againBtn').onclick=()=>{
+  aiReset();
+  document.getElementById('resultView').style.display='none';
+  document.getElementById('inputView').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+function fillResult(r){
+  const meta=p=>`${EL_NAME[p.element]} · ${effAge(p)}岁`;
+  document.getElementById('raSym').textContent=r.a.symbol;
+  document.getElementById('raName').textContent=r.a.name;
+  document.getElementById('raMeta').textContent=`${EL_NAME[r.a.element]} · ${r.ageA}岁`;
+  document.getElementById('rbSym').textContent=r.b.symbol;
+  document.getElementById('rbName').textContent=r.b.name;
+  document.getElementById('rbMeta').textContent=`${EL_NAME[r.b.element]} · ${r.ageB}岁`;
+  document.getElementById('rtVerdict').textContent=verdictOf(r.overall);
+
+  const fill=(k,d)=>{
+    document.getElementById('lv'+k).textContent=d.level;
+    document.getElementById('tx'+k).textContent=d.text;
+    document.getElementById('sc'+k).textContent='0';
+    resetBar(document.getElementById('bar'+k));
+  };
+  fill('Couple',r.couple);fill('Spouse',r.spouse);fill('Friend',r.friend);
+
+  document.getElementById('tpSymA').textContent=r.a.symbol;
+  document.getElementById('tpNameA').textContent=r.a.name;
+  document.getElementById('tpElA').textContent=EL_NAME[r.a.element];
+  document.getElementById('tpTagsA').innerHTML=r.a.traits.map(t=>`<span>${t}</span>`).join('');
+  document.getElementById('tpDescA').textContent=r.a.desc;
+  document.getElementById('tpSymB').textContent=r.b.symbol;
+  document.getElementById('tpNameB').textContent=r.b.name;
+  document.getElementById('tpElB').textContent=EL_NAME[r.b.element];
+  document.getElementById('tpTagsB').innerHTML=r.b.traits.map(t=>`<span>${t}</span>`).join('');
+  document.getElementById('tpDescB').textContent=r.b.desc;
+
+  /* AI 面板同步双方身份并复位 */
+  document.getElementById('aiSymA').textContent=r.a.symbol;
+  document.getElementById('aiNameA').textContent=r.a.name;
+  document.getElementById('aiSymB').textContent=r.b.symbol;
+  document.getElementById('aiNameB').textContent=r.b.name;
+  aiReset();
+}
+
+function resetBar(el){el.style.transition='none';el.style.width='0%';void el.offsetWidth;
+  el.style.transition='width 1.15s cubic-bezier(.2,.8,.2,1)';}
+
+function animateResult(r){
+  const C=2*Math.PI*52;
+  const fg=document.getElementById('ringFg');
+  fg.style.transition='none';
+  fg.style.strokeDashoffset=C;
+  void fg.getBoundingClientRect();
+  fg.style.transition='stroke-dashoffset 1.25s cubic-bezier(.2,.8,.2,1)';
+  requestAnimationFrame(()=>{fg.style.strokeDashoffset=C*(1-r.overall/100);});
+
+  countTo(document.getElementById('rtScore'),r.overall,1200,0);
+  [['Couple',r.couple,0],['Spouse',r.spouse,140],['Friend',r.friend,280]].forEach(([k,d,delay])=>{
+    countTo(document.getElementById('sc'+k),d.score,1000,delay);
+    setTimeout(()=>{document.getElementById('bar'+k).style.width=d.score+'%';},80+delay);
+  });
+}
+
+function countTo(el,to,dur,delay){
+  const token=(el._token||0)+1;el._token=token;
+  const start=performance.now()+delay;
+  function step(t){
+    if(el._token!==token)return;
+    if(t<start){requestAnimationFrame(step);return;}
+    const p=Math.min(1,(t-start)/dur);
+    const e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(to*e);
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ==================== AI 深度解读 ==================== */
+/* file:// 打开时默认连本地服务，双击也能接上真实 AI */
+const API_BASE = location.protocol === 'file:' ? 'http://localhost:8787' : '';
+const REL_KEY = {COUPLE:'couple', SPOUSE:'spouse', FRIEND:'friend'};
+
+const EL_REL_TEXT = {
+  'fire|fire':'同属火象，热度一致，但也容易一起上头',
+  'earth|fire':'火想快、土想稳，节奏差得比较明显',
+  'fire|air':'火借风势、风助火燃，互相点燃的类型',
+  'fire|water':'一个直给一个内收，容易互相误读',
+  'earth|earth':'同属土象，稳上加稳，也可能一起僵住',
+  'earth|air':'一个要落地一个要抽离，常常各说各话',
+  'earth|water':'土给水形状，水给土温度，适合长期',
+  'air|air':'同属风象，聊得来，但都可能回避落地',
+  'air|water':'理性和情绪容易错位，讲道理撞上讲感受',
+  'water|water':'同属水象，共情很强，也容易一起沉溺'
+};
+const EL_DETAIL = {
+  fire:{pace:'节奏偏快，想到就去做，讨厌反复商量', fight:'吵起来声势不小，但翻篇也快，不太记仇'},
+  earth:{pace:'步调偏稳，喜欢提前安排，讨厌临时变卦', fight:'不太会正面吵，更习惯冷处理，情绪压得比较久'},
+  air:{pace:'计划随时能改，聊天永远不缺话题', fight:'一有情绪就切到讲道理模式，容易被觉得不走心'},
+  water:{pace:'跟着感觉走，很在意氛围对不对', fight:'情绪先到，容易把以前的旧账一起翻出来'}
+};
+
+const AI = {running:false, full:'', ctrl:null, mock:false, got:false, dead:false, deadReason:''};
+
+function aiReset(){
+  if(AI.ctrl){try{AI.ctrl.abort();}catch(e){} AI.ctrl=null;}
+  AI.running=false; AI.full=''; AI.mock=false; AI.got=false;
+
+  const body=document.getElementById('aiBody');
+  if(body) body.classList.remove('on');
+  document.querySelectorAll('#aiBody .ai-sec').forEach(el=>{
+    el.classList.remove('on');
+    const p=el.querySelector('p');
+    if(p){p.textContent='';p.classList.remove('streaming');}
+  });
+  document.querySelectorAll('#aiBody [data-score]').forEach(el=>el.textContent='—');
+  document.querySelectorAll('#aiBody [data-diff]').forEach(el=>{el.textContent='';el.className='ai-diff';});
+
+  const st=document.getElementById('aiStatus');
+  if(st) st.className='ai-status';
+  const stx=document.getElementById('aiStatusText');
+  if(stx) stx.textContent='正在读取两个人的星座…';
+  const sub=document.getElementById('aiSub');
+  if(sub) sub.textContent='算法给出结论，AI 讲清为什么';
+  const btn=document.getElementById('aiBtn');
+  if(btn){btn.disabled=false;btn.textContent='让 AI 分析';}
+}
+
+function aiStatus(type,text){
+  const el=document.getElementById('aiStatus');
+  el.className='ai-status'+(type?' '+type:'');
+  document.getElementById('aiStatusText').textContent=text;
+}
+
+function setAiScore(key,score){
+  const s=clamp(Math.round(score),0,100);
+  const b=document.querySelector('#aiBody [data-score="'+key+'"]');
+  if(b) b.textContent=s;
+
+  const d=document.querySelector('#aiBody [data-diff="'+key+'"]');
+  if(!d) return;
+  const base=state.result?state.result[REL_KEY[key]].score:null;
+  if(base==null){d.textContent='';return;}
+  const diff=s-base;
+  d.textContent='算法 '+base+(diff===0?'':' · '+(diff>0?'+':'')+diff);
+  d.className='ai-diff'+(diff>0?' up':diff<0?' down':'');
+}
+
+/* 按标记切分全文：每次收到增量都整体重算，天然得到逐字效果 */
+const MARK_RE=/<<<\s*(A|B|COUPLE|SPOUSE|FRIEND|SUMMARY)\s*>>>/g;
+
+function aiFeed(chunk){
+  if(!chunk) return;
+  AI.got=true;
+  AI.full+=chunk;
+  aiRender();
+}
+
+function aiRender(){
+  const full=AI.full;
+  MARK_RE.lastIndex=0;
+  const marks=[];
+  let m;
+  while((m=MARK_RE.exec(full))) marks.push({key:m[1],start:m.index,end:m.index+m[0].length});
+  if(!marks.length) return;
+
+  const seen={};
+  marks.forEach((mk,i)=>{
+    if(seen[mk.key]) return;
+    seen[mk.key]=1;
+    let text=full.slice(mk.end, i+1<marks.length?marks[i+1].start:full.length);
+    if(i===marks.length-1){
+      /* 末尾可能是半个标记，先剥掉，等下一批数据 */
+      text=text.replace(/<{1,3}[A-Za-z]{0,12}\s*$/,'');
+    }
+    renderSection(mk.key,text);
+  });
+}
+
+function renderSection(key,raw){
+  const el=document.querySelector('#aiBody .ai-sec[data-sec="'+key+'"]');
+  if(!el) return;
+
+  let body=raw.replace(/^[ \t]*\r?\n+/,'');
+  const isRel=Object.prototype.hasOwnProperty.call(REL_KEY,key);
+
+  if(isRel){
+    const nl=body.indexOf('\n');
+    const first=(nl===-1?body:body.slice(0,nl)).trim();
+    const mm=first.match(/^[^\d]{0,4}(\d{1,3})[^\d]{0,4}$/);
+    if(mm){
+      setAiScore(key,+mm[1]);
+      body=nl===-1?'':body.slice(nl+1);
+    }
+    body=body.replace(/^[ \t]*\n+/,'');
+  }
+
+  const p=el.querySelector('p');
+  if(!p) return;
+
+  const scoreEl=el.querySelector('[data-score]');
+  const hasScore=scoreEl && scoreEl.textContent!=='—';
+  if(body.trim()||hasScore) el.classList.add('on');
+
+  p.textContent=body.trimStart();
+  p.classList.add('streaming');
+}
+
+function aiComplete(){
+  document.querySelectorAll('#aiBody .ai-sec p').forEach(p=>p.classList.remove('streaming'));
+}
+
+/* ---------- 真实接口（SSE） ---------- */
+async function streamRemote(payload,signal){
+  const resp=await fetch(API_BASE+'/api/ai/analyze',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload),
+    signal
+  });
+
+  if(!resp.ok){
+    let msg='AI 服务返回 '+resp.status;
+    try{const j=await resp.json();if(j.error)msg=j.error;}catch(e){}
+    throw new Error(msg);
+  }
+  if(!resp.body||!resp.body.getReader) throw new Error('当前环境不支持流式读取');
+
+  const reader=resp.body.getReader();
+  const dec=new TextDecoder();
+  let buf='', got=false;
+
+  while(true){
+    const {done,value}=await reader.read();
+    if(done) break;
+    buf+=dec.decode(value,{stream:true}).replace(/\r/g,'');
+    const blocks=buf.split('\n\n');
+    buf=blocks.pop()||'';
+
+    for(const block of blocks){
+      let ev='message', data='';
+      for(const line of block.split('\n')){
+        if(line.startsWith('event:')) ev=line.slice(6).trim();
+        else if(line.startsWith('data:')) data+=line.slice(5).trim();
+      }
+      if(!data) continue;
+
+      let obj;
+      try{obj=JSON.parse(data);}catch(e){continue;}
+
+      if(ev==='delta'){got=true;aiFeed(obj.t);}
+      else if(ev==='error'){throw new Error(obj.message||'AI 服务异常');}
+      else if(ev==='meta'&&obj.model){
+        document.getElementById('aiSub').textContent='由 '+obj.model+' 生成 · 仅供参考';
+      }
+    }
+  }
+  if(!got) throw new Error('AI 没有返回内容，请重试');
+}
+
+/* ---------- 本地模拟：没有服务时保证原型可演示 ---------- */
+function mockText(p){
+  const A=ZODIACS[p.a.sign], B=ZODIACS[p.b.sign];
+  const ea=EL_DETAIL[A.element], eb=EL_DETAIL[B.element];
+  const rel=EL_REL_TEXT[keyOf(A.element,B.element)]||'元素之间比较中性';
+  const base=p.base;
+  const seed=p.a.sign*7+p.b.sign*11;
+  const jit=n=>(seed+n*2)%5-2;
+
+  let c=clamp(base.couple+jit(1),30,96);
+  let s=clamp(base.spouse+jit(2),30,96);
+  let f=clamp(base.friend+jit(3),30,96);
+  if(c===s&&s===f) f=clamp(f+1,30,96);
+
+  const gap=Math.abs(p.a.age-p.b.age);
+  const gapLine=gap<=3?'年龄几乎同步，生活阶段的错位感不重'
+    :gap<=7?'相差 '+gap+' 岁，有些生活节奏需要对齐'
+    :'相差 '+gap+' 岁，人生进度条不太一样，需要更多耐心';
+
+  let pk=0;
+  const pick=arr=>arr[(seed+pk++)%arr.length];
+
+  const coupleText=c>=80?pick([
+    rel+'，你们之间那种一见面就能感觉到的电流是真实存在的。'+A.name+'的'+A.traits[0]+'会点燃'+B.name+'，而'+B.name+'的'+B.traits[1]+'正好让'+A.name+'觉得被接住。',
+    rel+'，这段关系最大的优势是节奏对得上。'+A.name+'不用解释太多，'+B.name+'就能明白 TA 在兴奋什么，反过来也一样。'
+  ]):c>=60?pick([
+    rel+'。心动是有的，但要花点时间才能找到舒服的距离，前期别急着把两个人的生活完全重叠。',
+    rel+'，属于越相处越有感觉的类型。两个人需要一点磨合期，过了那道坎会顺很多。'
+  ]):pick([
+    rel+'，吸引力存在，但消耗也快。'+A.name+'习惯'+ea.pace+'，'+B.name+'更习惯'+eb.pace+'，节奏差容易被误读成不在乎。',
+    rel+'，这段关系需要其中一个人先放下"应该怎样"。'+ea.fight+'，而'+B.name+'那边'+eb.fight+'。'
+  ]);
+
+  const spouseText=s>=80?pick([
+    gapLine+'。长期来看，冲突修复能力比激情更重要，而这恰好是你们的强项：一个愿意说，一个愿意听。',
+    '婚姻维度上，'+rel+'带来的稳定性很加分。家务、金钱、作息这些无聊事，你们反而不容易吵。'
+  ]):s>=60?pick([
+    gapLine+'。过日子和谈恋爱是两套系统，你们在后者更顺。建议早点把分工和金钱观聊明白，别指望时间自动解决。',
+    '长期相处需要规则感。'+A.name+'的'+A.traits[0]+'在亲密关系里是优点，落到生活琐事上可能变成压力。'
+  ]):pick([
+    gapLine+'。婚姻维度是你们最需要小心的地方：'+rel+'，短期能靠热情撑住，长期要靠具体的生活安排。',
+    '不建议把"以后自然就好了"当成方案。'+ea.fight+'，这一点在婚后会被放大。'
+  ]);
+
+  const friendText=f>=80?pick([
+    '朋友这条线上，你们几乎不需要努力就能相处舒服。能一起疯，也能各过各的，不用天天联系也不会生分。',
+    '朋友维度是三项里最轻松的：'+A.name+'的'+A.traits[0]+'和'+B.name+'的'+B.traits[1]+'天然合得来，聊天很少冷场。'
+  ]):f>=60?pick([
+    '做朋友比谈恋爱省力得多。友谊的小船挺稳，前提是别把对方当成情绪垃圾桶。',
+    '相处起来总体舒服，只是共同话题需要主动找。一起做点具体的事，比单纯聊天更容易拉近。'
+  ]):pick([
+    '友情这条线也需要磨合。'+ea.fight+'，'+B.name+'那边'+eb.fight+'，彼此容易觉得对方听不懂自己。',
+    '友谊能维持，但需要有人主动。别指望'+B.name+'先开口，'+A.name+'的'+A.traits[0]+'有时候会被当成冷淡。'
+  ]);
+
+  const sum=c>=85&&s>=85?'天生一对，连吵架都像在打情骂俏。'
+    :f>c&&f>s?'比起恋人，你们更该做那种能聊到凌晨的朋友。'
+    :s>c?'谈恋爱一般，过日子意外合拍，属于闷声发大财型。'
+    :c>s?'心动很真，长期需要更多耐心，先谈恋爱，别急着谈以后。'
+    :'不算天作之合，但足够有趣，值得试一次。';
+
+  return [
+    '<<<A>>>',
+    A.name+'是'+A.traits[0]+'型的人，'+A.desc+'和 TA 相处，'+ea.pace+'；'+ea.fight+'。',
+    '<<<B>>>',
+    B.name+'是'+B.traits.join('、')+'的组合。'+B.desc+'和你在一起时，TA 身上'+B.traits[2]+'的那一面会格外明显。',
+    '<<<COUPLE>>>',
+    c,
+    coupleText,
+    '<<<SPOUSE>>>',
+    s,
+    spouseText,
+    '<<<FRIEND>>>',
+    f,
+    friendText,
+    '<<<SUMMARY>>>',
+    sum
+  ].join('\n');
+}
+
+function streamMock(payload,signal){
+  const text=mockText(payload);
+  return new Promise((resolve,reject)=>{
+    let i=0;
+    (function tick(){
+      if(signal.aborted){
+        const e=new Error('aborted'); e.name='AbortError'; reject(e); return;
+      }
+      if(i>=text.length){resolve();return;}
+      const step=2+Math.floor(Math.random()*4);
+      aiFeed(text.slice(i,i+step));
+      i+=step;
+      setTimeout(tick,12+Math.random()*16);
+    })();
+  });
+}
+
+/* ---------- 主流程 ---------- */
+async function runAI(){
+  if(!state.result||AI.running) return;
+  aiReset();
+  AI.running=true;
+
+  const btn=document.getElementById('aiBtn');
+  btn.disabled=true; btn.textContent='分析中…';
+  document.getElementById('aiBody').classList.add('on');
+  aiStatus('','正在连接 AI…');
+
+  const r=state.result;
+  const payload={
+    a:{sign:state.a.sign, age:r.ageA, gender:state.a.gender},
+    b:{sign:state.b.sign, age:r.ageB, gender:state.b.gender},
+    base:{couple:r.couple.score, spouse:r.spouse.score, friend:r.friend.score, overall:r.overall}
+  };
+
+  AI.ctrl=new AbortController();
+  const signal=AI.ctrl.signal;
+
+  let mode='mock';
+  try{
+    const h=await fetch(API_BASE+'/api/ai/health',{signal,cache:'no-store'});
+    if(h.ok){
+      const j=await h.json();
+      if(j.configured) mode='remote';
+    }
+  }catch(e){
+    if(e.name==='AbortError'){AI.running=false;return;}
+  }
+
+  /* 本次会话已确认上游不可用 → 直接走演示，不再白等一次失败 */
+  if(AI.dead) mode='mock';
+
+  AI.mock=mode==='mock';
+  if(mode==='mock'){
+    document.getElementById('aiSub').textContent=AI.dead?'演示模式 · 真实 AI 暂不可用':'演示模式 · 本地模拟输出';
+    aiStatus('','正在理解你们的关系…');
+  }else{
+    aiStatus('','正在生成分析…');
+  }
+
+  try{
+    if(mode==='remote') await streamRemote(payload,signal);
+    else await streamMock(payload,signal);
+
+    aiComplete();
+    aiStatus(mode==='remote'?'done':(AI.dead?'warn':'done'),
+      mode==='remote'?'分析完成 · 内容由 AI 生成，仅供娱乐'
+      :AI.dead?('真实 AI 不可用（'+AI.deadReason+'）· 当前为演示内容')
+      :'演示完成 · 启动本地服务可接入真实 AI');
+    btn.textContent='重新分析';
+  }catch(err){
+    if(err.name==='AbortError') return;
+
+    /* 真实 AI 一个字都没吐出来就失败 → 自动降级演示，避免面板空白 */
+    if(mode==='remote' && !AI.got){
+      const reason=String(err.message||'连接失败').replace(/\s+/g,' ').slice(0,110);
+      AI.dead=true; AI.deadReason=reason;
+      aiReset();
+      AI.running=true; AI.mock=true; AI.got=false;
+      AI.ctrl=new AbortController();
+      document.getElementById('aiBody').classList.add('on');
+      document.getElementById('aiSub').textContent='演示模式 · 真实 AI 暂不可用';
+      aiStatus('','已切换演示模式，正在生成…');
+      btn.disabled=true; btn.textContent='分析中…';
+      try{
+        await streamMock(payload,AI.ctrl.signal);
+        aiComplete();
+        aiStatus('warn','真实 AI 不可用（'+reason+'）· 当前为演示内容');
+        btn.textContent='重新分析';
+      }catch(e2){
+        if(e2.name!=='AbortError') aiStatus('err',e2.message||'演示生成失败');
+        btn.textContent='重试';
+      }
+      return;
+    }
+
+    aiComplete();
+    aiStatus('err',err.message||'AI 分析失败，请稍后重试');
+    btn.textContent='重试';
+  }finally{
+    AI.running=false;
+    btn.disabled=false;
+    AI.ctrl=null;
+  }
+}
+
+/* ==================== 海报 ==================== */
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function wrapText(ctx,text,x,y,maxW,lh){
+  let line='',lines=[];
+  for(const ch of text){
+    if(ctx.measureText(line+ch).width>maxW&&line){lines.push(line);line=ch;}
+    else line+=ch;
+  }
+  if(line)lines.push(line);
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));
+}
+function drawPoster(r){
+  const W=750,H=1150,c=document.createElement('canvas');
+  c.width=W;c.height=H;const x=c.getContext('2d');
+  const F='-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+  const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#0a0818');g.addColorStop(.5,'#1a1033');g.addColorStop(1,'#2a1746');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+
+  const glow=x.createRadialGradient(375,330,20,375,330,420);
+  glow.addColorStop(0,'rgba(167,139,250,.24)');glow.addColorStop(1,'rgba(167,139,250,0)');
+  x.fillStyle=glow;x.fillRect(0,0,W,H);
+
+  for(let i=0;i<130;i++){
+    x.globalAlpha=Math.random()*.65+.08;x.fillStyle='#fff';
+    x.beginPath();x.arc(Math.random()*W,Math.random()*H,Math.random()*1.7+.4,0,7);x.fill();
+  }
+  x.globalAlpha=1;x.textAlign='center';
+
+  x.fillStyle='#FFD36E';x.font='600 22px '+F;
+  x.fillText('✦ SIGN MATCH · 星座速配',W/2,68);
+  x.fillStyle='#fff';x.font='800 44px '+F;
+  x.fillText('星座速配报告',W/2,126);
+  x.fillStyle='#9E95C0';x.font='20px '+F;
+  x.fillText('恋人 · 夫妻 · 朋友 三维契合度',W/2,164);
+
+  x.font='700 46px '+F;x.fillStyle='#fff';
+  x.fillText(r.a.symbol,210,258);
+  x.fillText(r.b.symbol,540,258);
+  x.font='700 24px '+F;
+  x.fillText(r.a.name,210,302);
+  x.fillText(r.b.name,540,302);
+  x.fillStyle='#9E95C0';x.font='18px '+F;
+  x.fillText(EL_NAME[r.a.element]+' · '+r.ageA+'岁',210,332);
+  x.fillText(EL_NAME[r.b.element]+' · '+r.ageB+'岁',540,332);
+  x.fillStyle='#FF7EB6';x.font='800 28px '+F;
+  x.fillText('×',375,270);
+
+  const cx=375,cy=428,rad=62;
+  x.beginPath();x.arc(cx,cy,rad,0,Math.PI*2);
+  x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=14;x.stroke();
+  const arcG=x.createLinearGradient(cx-rad,cy-rad,cx+rad,cy+rad);
+  arcG.addColorStop(0,'#FFD36E');arcG.addColorStop(1,'#FF7EB6');
+  x.beginPath();x.arc(cx,cy,rad,-Math.PI/2,-Math.PI/2+Math.PI*2*(r.overall/100));
+  x.strokeStyle=arcG;x.lineWidth=14;x.lineCap='round';x.stroke();
+  x.fillStyle='#fff';x.font='900 44px '+F;x.fillText(r.overall,cx,cy+8);
+  x.fillStyle='#9E95C0';x.font='13px '+F;x.fillText('综合契合指数',cx,cy+34);
+
+  const rows=[
+    ['couple','💞 恋人','#FFD36E','#FF7EB6'],
+    ['spouse','💍 夫妻','#A78BFA','#7DD3FC'],
+    ['friend','🤝 朋友','#7DD3FC','#A7F3D0']
+  ];
+  rows.forEach(([k,label,c1,c2],i)=>{
+    const y=520+i*148;
+    roundRect(x,50,y,650,128,26);
+    x.fillStyle='rgba(255,255,255,.06)';x.fill();
+    x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.stroke();
+
+    x.textAlign='left';x.fillStyle='#fff';x.font='700 25px '+F;
+    x.fillText(label,88,y+44);
+    x.fillStyle=c1;x.font='700 19px '+F;
+    x.fillText(r[k].level,88,y+76);
+
+    x.textAlign='right';x.fillStyle=c1;x.font='900 44px '+F;
+    x.fillText(r[k].score,660,y+52);
+    x.fillStyle='#9E95C0';x.font='16px '+F;
+    x.fillText('分',660,y+76);
+
+    const bw=572,bx=88,by=y+96;
+    roundRect(x,bx,by,bw,10,5);x.fillStyle='rgba(255,255,255,.1)';x.fill();
+    const fg2=x.createLinearGradient(bx,0,bx+bw,0);
+    fg2.addColorStop(0,c1);fg2.addColorStop(1,c2);
+    roundRect(x,bx,by,Math.max(10,bw*r[k].score/100),10,5);
+    x.fillStyle=fg2;x.fill();
+  });
+
+  x.textAlign='center';x.fillStyle='#FFD36E';x.font='700 22px '+F;
+  x.fillText(verdictOf(r.overall),W/2,1012);
+  x.fillStyle='rgba(255,255,255,.38)';x.font='16px '+F;
+  x.fillText('本结果仅供娱乐 · 基于太阳星座的趣味规则引擎',W/2,H-44);
+
+  return c;
+}
+document.getElementById('saveBtn').onclick=()=>{
+  if(!state.result){toast('请先完成一次速配');return;}
+  const c=drawPoster(state.result);
+  const a=document.createElement('a');
+  a.download=`星座速配_${state.result.a.name}_${state.result.b.name}.png`;
+  a.href=c.toDataURL('image/png');
+  a.click();
+  toast('海报已生成，快去分享吧 ✨');
+};
+
+document.getElementById('aiBtn').onclick=runAI;
+</script>
+</body>
+</html>
